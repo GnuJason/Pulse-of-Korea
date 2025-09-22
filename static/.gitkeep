@@ -1,0 +1,10 @@
+# Static Assets Directory
+
+This directory is reserved for future static assets like:
+- CSS files
+- JavaScript files
+- Images
+- Icons
+- Other static content
+
+Currently, all styling is handled via TailwindCSS CDN and templates include inline assets.

@@ -94,8 +94,9 @@ app.add_middleware(SlowAPIMiddleware)
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
-# Mount static files
-app.mount("/static", StaticFiles(directory="static"), name="static")
+# Mount static files (only if directory exists)
+if os.path.exists("static"):
+    app.mount("/static", StaticFiles(directory="static"), name="static")
 
 # Jinja2 templates
 templates = Jinja2Templates(directory="templates")
