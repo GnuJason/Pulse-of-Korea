@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="500" height="700" viewBox="0 0 500 700" 
+     xmlns="http://www.w3.org/2000/svg">
+<defs>
+  <style>
+    .country {
+      cursor: pointer;
+      stroke: white;
+      stroke-width: 1.5;
+      transition: all 0.3s ease;
+    }
+    .country:hover {
+      opacity: 0.8;
+      stroke-width: 2.5;
+    }
+    #south-korea {
+      fill: #00BFFF;
+    }
+    #north-korea {
+      fill: #1E90FF;
+    }
+    .country-label {
+      fill: white;
+      font-family: Arial, sans-serif;
+      font-size: 14px;
+      font-weight: bold;
+      text-anchor: middle;
+      pointer-events: none;
+      text-shadow: 1px 1px 2px rgba(0,0,0,0.7);
+    }
+  </style>
+</defs>\n  <path id="north-korea" class="country" d="M 428.0 156.9 L 428.0 156.9 L 428.0 156.9 L 428.0 156.9 Z M 420.4 147.4 L 385.1 115.1 L 363.3 145.7 L 278.9 169.3 L 287.5 198.1 L 240.2 196.1 L 214.3 179.0 L 176.7 217.8 L 116.5 247.1 L 72.0 282.2 L 97.8 296.8 L 129.7 302.8 L 133.2 311.7 L 119.4 341.2 L 124.2 351.2 L 111.3 357.6 L 96.4 381.7 L 111.1 390.4 L 125.2 395.4 L 127.2 405.7 L 143.2 401.1 L 149.8 390.9 L 176.3 401.3 L 179.7 396.3 L 204.1 398.3 L 225.4 373.6 L 264.1 370.9 L 287.3 367.3 L 295.2 354.1 L 264.2 330.2 L 242.5 321.3 L 248.9 315.2 L 250.6 291.6 L 274.3 276.9 L 310.7 267.9 L 331.3 251.7 L 341.0 242.1 L 369.3 230.0 L 367.2 190.8 L 383.5 172.2 L 407.3 153.7 L 428.0 156.9 L 420.4 147.4 L 420.4 147.4 Z" />\n  <text x="230.4" y="270.5" class="country-label">North Korea</text>\n  <path id="south-korea" class="country" d="M 176.3 401.3 L 213.8 448.0 L 173.2 457.2 L 197.3 514.1 L 187.2 555.1 L 193.3 584.9 L 242.6 580.2 L 286.2 557.5 L 335.7 547.0 L 356.3 517.0 L 355.9 454.0 L 342.4 418.6 L 295.2 354.1 L 287.3 367.3 L 264.1 370.9 L 225.4 373.6 L 204.1 398.3 L 179.7 396.3 L 176.3 401.3 Z" />\n  <text x="266.3" y="473.5" class="country-label">South Korea</text>\n</svg>

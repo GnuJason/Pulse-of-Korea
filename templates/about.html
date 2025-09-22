@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ title }}</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <style>
+        body { background: transparent; }
+        #vanta-bg { position: fixed; top:0; left:0; width:100vw; height:100vh; z-index:0; }
+        #main-content { position: relative; z-index: 1; }
+    </style>
+</head>
+<body class="bg-gray-900 text-gray-100 font-sans">
+    <div id="vanta-bg"></div>
+    <div id="main-content" class="min-h-screen py-12 px-4">
+        <div class="max-w-4xl mx-auto">
+            <!-- Navigation -->
+            <nav class="mb-8">
+                <div class="flex flex-wrap gap-4">
+                    <a href="/" class="text-blue-400 hover:text-blue-300 transition-colors">← Back to Pulse of Korea</a>
+                    <a href="/privacy" class="text-blue-400 hover:text-blue-300 transition-colors">Privacy</a>
+                </div>
+            </nav>
+
+            <!-- Content -->
+            <div class="bg-gray-800/80 backdrop-blur-sm rounded-lg p-8 border border-gray-700">
+                <h1 class="text-4xl font-bold mb-6 text-white">About Pulse of Korea</h1>
+                
+                <div class="prose prose-invert max-w-none">
+                    <h2 class="text-2xl font-semibold mb-4 text-blue-400">Project Overview</h2>
+                    <p class="mb-6 text-gray-300 leading-relaxed">
+                        Pulse of Korea is a real-time demographic visualization platform that displays population data for the Korean Peninsula. 
+                        Our mission is to provide accurate, up-to-date demographic information for both South Korea and North Korea in an 
+                        engaging and accessible format.
+                    </p>
+
+                    <h2 class="text-2xl font-semibold mb-4 text-blue-400">Data Sources</h2>
+                    <div class="mb-6 text-gray-300">
+                        <div class="mb-4">
+                            <h3 class="text-lg font-medium text-white mb-2">South Korea Data</h3>
+                            <p>Official statistics from <strong>KOSIS (Korean Statistical Information Service)</strong>, 
+                            the national statistical office of South Korea. This ensures the highest accuracy and 
+                            reliability for South Korean demographic data.</p>
+                        </div>
+                        <div>
+                            <h3 class="text-lg font-medium text-white mb-2">North Korea Data</h3>
+                            <p>Data sourced from the <strong>CIA World Factbook 2024</strong>. Due to the restricted 
+                            nature of North Korea, demographic data may have limitations and should be interpreted 
+                            with appropriate context.</p>
+                        </div>
+                    </div>
+
+                    <h2 class="text-2xl font-semibold mb-4 text-blue-400">Features</h2>
+                    <ul class="mb-6 text-gray-300 space-y-2">
+                        <li>• Real-time population ticker with synchronized birth and death counters</li>
+                        <li>• Individual country breakdowns with growth rate indicators</li>
+                        <li>• Interactive map visualization of the Korean Peninsula</li>
+                        <li>• Responsive design optimized for all devices</li>
+                        <li>• API endpoints for accessing demographic data programmatically</li>
+                    </ul>
+
+                    <h2 class="text-2xl font-semibold mb-4 text-blue-400">Technology</h2>
+                    <p class="mb-6 text-gray-300 leading-relaxed">
+                        Built with modern web technologies including FastAPI, Jinja2 templates, TailwindCSS, 
+                        and Vanta.js for dynamic visual effects. The application emphasizes performance, 
+                        security, and user experience.
+                    </p>
+
+                    <h2 class="text-2xl font-semibold mb-4 text-blue-400">Contact</h2>
+                    <p class="text-gray-300">
+                        For questions, suggestions, or data inquiries, please use our contact form or reach out 
+                        through the provided channels.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r121/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vanta@latest/dist/vanta.net.min.js"></script>
+    <script>
+        VANTA.NET({
+            el: "#vanta-bg",
+            mouseControls: true,
+            touchControls: true,
+            minHeight: 200.00,
+            minWidth: 200.00,
+            scale: 1.00,
+            scaleMobile: 1.00,
+            color: 0x1e293b,
+            backgroundColor: 0x111827,
+            points: 12.0,
+            maxDistance: 22.0,
+            spacing: 18.0
+        });
+    </script>
+</body>
+</html>

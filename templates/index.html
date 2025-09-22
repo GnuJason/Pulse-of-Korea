@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pulse of Korea</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <style>
+        body { background: transparent; }
+        #vanta-bg { position: fixed; top:0; left:0; width:100vw; height:100vh; z-index:0; }
+        #main-content { position: relative; z-index: 1; }
+        
+        /* Background Korea Map Styling */
+        .korea-background svg {
+            width: 100%;
+            height: 100%;
+            max-width: 800px;
+            max-height: 1000px;
+        }
+        
+        .korea-background #south-korea,
+        .korea-background #north-korea {
+            fill: none !important;
+            stroke: rgba(0, 191, 255, 0.3) !important;
+            stroke-width: 1.5 !important;
+            cursor: default !important;
+        }
+        
+        .korea-background .country-label {
+            opacity: 0.4 !important;
+            font-size: 14px !important;
+            fill: rgba(0, 191, 255, 0.4) !important;
+        }
+        
+        /* WebSocket connection status */
+        .connection-status {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            z-index: 30;
+        }
+        .connected { background: rgba(34, 197, 94, 0.8); color: white; }
+        .disconnected { background: rgba(239, 68, 68, 0.8); color: white; }
+        .connecting { background: rgba(251, 191, 36, 0.8); color: white; }
+    </style>
+</head>
+<body class="bg-gray-900 text-gray-100 font-sans">
+    <div id="vanta-bg"></div>
+    
+    <!-- Navigation -->
+    <nav class="fixed top-4 left-4 z-20">
+        <div class="flex space-x-4">
+            <a href="/about" class="text-blue-400 hover:text-blue-300 transition-colors text-sm bg-gray-800/80 px-3 py-1 rounded">About</a>
+            <a href="/contact" class="text-blue-400 hover:text-blue-300 transition-colors text-sm bg-gray-800/80 px-3 py-1 rounded">Contact</a>
+            <a href="/privacy" class="text-blue-400 hover:text-blue-300 transition-colors text-sm bg-gray-800/80 px-3 py-1 rounded">Privacy</a>
+        </div>
+    </nav>
+    
+    <!-- Connection Status -->
+    <div id="connection-status" class="connection-status connecting">Connecting...</div>
+    
+    <div id="main-content" class="flex flex-col items-center justify-center min-h-screen px-4">
+        <div class="text-center mb-6 sm:mb-8 relative z-10">
+            <h1 class="text-3xl sm:text-4xl md:text-5xl font-bold mb-4 tracking-tight text-white drop-shadow-lg">Pulse of Korea</h1>
+            <p class="mb-4 sm:mb-6 text-lg sm:text-xl text-gray-200 drop-shadow-md">Real-time demographic data for the Korean Peninsula</p>
+        </div>
+
+        <!-- Background Korea Map -->
+        <div class="fixed inset-0 flex items-center justify-center z-0 opacity-15 pointer-events-none">
+            <div class="w-full h-full flex items-center justify-center" style="transform: scale(2.0);">
+                <div id="background-map" class="korea-background">
+                    {% include 'korea.svg' %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Population Ticker -->
+        <div class="mb-8 relative z-10 px-4">
+            <div class="bg-gray-800/80 backdrop-blur-sm rounded-lg p-4 sm:p-6 max-w-4xl mx-auto border border-gray-700">
+                <!-- Top Row - Total Population -->
+                <div class="flex justify-center mb-6 sm:mb-8">
+                    <div class="text-center space-y-2">
+                        <div class="text-sm text-gray-400 uppercase tracking-wide">Total Population</div>
+                        <div id="total-population" class="text-3xl sm:text-4xl font-mono font-bold text-blue-400">
+                            {{ (data.south_korea.population + data.north_korea.population) | comma }}
+                        </div>
+                        <div class="text-xs text-gray-500">Korean Peninsula</div>
+                    </div>
+                </div>
+                
+                <!-- Bottom Row - Births and Deaths -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-8">
+                    <!-- Live Birth Counter -->
+                    <div class="text-center space-y-2">
+                        <div class="text-sm text-gray-400 uppercase tracking-wide">Births Today</div>
+                        <div class="flex items-center justify-center gap-2">
+                            <span id="births-indicator" class="text-xl sm:text-2xl opacity-0 transition-opacity duration-200">🐣</span>
+                            <div id="births-today" class="text-2xl sm:text-3xl font-mono font-bold text-green-400">
+                                <span class="counter">{{ ((data.south_korea.births_2024 + data.north_korea.births_2024) / 365) | round | int }}</span>
+                            </div>
+                        </div>
+                        <div class="text-xs text-gray-500">&nbsp;</div>
+                    </div>
+                    
+                    <!-- Live Death Counter -->
+                    <div class="text-center space-y-2">
+                        <div class="text-sm text-gray-400 uppercase tracking-wide">Deaths Today</div>
+                        <div class="flex items-center justify-center gap-2">
+                            <span id="deaths-indicator" class="text-xl sm:text-2xl opacity-0 transition-opacity duration-200">💀</span>
+                            <div id="deaths-today" class="text-2xl sm:text-3xl font-mono font-bold text-red-400">
+                                <span class="counter">{{ ((data.south_korea.deaths_2024 + data.north_korea.deaths_2024) / 365) | round | int }}</span>
+                            </div>
+                        </div>
+                        <div class="text-xs text-gray-500">&nbsp;</div>
+                    </div>
+                </div>
+                
+                <!-- Real-time ticker effect -->
+                <div class="mt-6 pt-4 border-t border-gray-700">
+                    <div class="flex justify-between items-center text-xs text-gray-400">
+                        <span>Real-time data from KOSIS & CIA World Factbook</span>
+                        <span id="live-time"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Individual Country Displays -->
+        <div class="mt-12 sm:mt-16 w-full max-w-6xl mx-auto px-4 relative z-10">
+            <h2 class="text-2xl sm:text-3xl font-bold text-center mb-6 sm:mb-8 text-white">Individual Country Data</h2>
+            
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8">
+                <!-- South Korea Only -->
+                <div class="bg-gray-800 bg-opacity-80 backdrop-blur-sm rounded-xl p-4 sm:p-6 border border-gray-700">
+                    <div class="text-center mb-4 sm:mb-6">
+                        <h3 class="text-xl sm:text-2xl font-bold text-blue-400 mb-2">🇰🇷 South Korea</h3>
+                        <div class="text-2xl sm:text-3xl font-bold text-white" id="sk-population">{{ data.south_korea.population | comma }}</div>
+                        <div class="text-sm text-gray-400 flex items-center justify-center gap-2">
+                            <span>Population</span>
+                            <span id="sk-growth-rate" class="text-sm font-medium {{ 'text-red-400' if data.south_korea.population_growth_rate < 0 else 'text-green-400' }}">
+                                {{ data.south_korea.population_growth_rate }}%
+                            </span>
+                        </div>
+                    </div>
+                    
+                    <div class="grid grid-cols-2 gap-3 sm:gap-4">
+                        <div class="text-center p-3 sm:p-4 bg-gray-700 rounded-lg">
+                            <div class="text-lg sm:text-xl font-bold text-green-400" id="sk-births-today">0</div>
+                            <div class="text-xs text-gray-300">Births Today</div>
+                        </div>
+                        <div class="text-center p-3 sm:p-4 bg-gray-700 rounded-lg">
+                            <div class="text-lg sm:text-xl font-bold text-red-400" id="sk-deaths-today">0</div>
+                            <div class="text-xs text-gray-300">Deaths Today</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Attribution -->
+                    <div class="mt-4 pt-3 border-t border-gray-700">
+                        <div class="text-xs text-gray-400 text-center">
+                            <span>KOSIS (Korean Statistical Information Service)</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- North Korea Only -->
+                <div class="bg-gray-800 bg-opacity-80 backdrop-blur-sm rounded-xl p-4 sm:p-6 border border-gray-700">
+                    <div class="text-center mb-4 sm:mb-6">
+                        <h3 class="text-xl sm:text-2xl font-bold text-blue-600 mb-2">🇰🇵 North Korea</h3>
+                        <div class="text-2xl sm:text-3xl font-bold text-white" id="nk-population">{{ data.north_korea.population | comma }}</div>
+                        <div class="text-sm text-gray-400 flex items-center justify-center gap-2">
+                            <span>Population</span>
+                            <span id="nk-growth-rate" class="text-sm font-medium {{ 'text-red-400' if data.north_korea.population_growth_rate < 0 else 'text-green-400' }}">
+                                +{{ data.north_korea.population_growth_rate }}%
+                            </span>
+                        </div>
+                    </div>
+                    
+                    <div class="grid grid-cols-2 gap-3 sm:gap-4">
+                        <div class="text-center p-3 sm:p-4 bg-gray-700 rounded-lg">
+                            <div class="text-lg sm:text-xl font-bold text-green-400" id="nk-births-today">0</div>
+                            <div class="text-xs text-gray-300">Births Today</div>
+                        </div>
+                        <div class="text-center p-3 sm:p-4 bg-gray-700 rounded-lg">
+                            <div class="text-lg sm:text-xl font-bold text-red-400" id="nk-deaths-today">0</div>
+                            <div class="text-xs text-gray-300">Deaths Today</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Attribution -->
+                    <div class="mt-4 pt-3 border-t border-gray-700">
+                        <div class="text-xs text-gray-400 text-center">
+                            <span>CIA World Factbook</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        </div>
+    </div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r121/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vanta@latest/dist/vanta.net.min.js"></script>
+    <script>
+    // Real-time population system using WebSocket
+    class PopulationTracker {
+        constructor() {
+            this.websocket = null;
+            this.reconnectAttempts = 0;
+            this.maxReconnectAttempts = 5;
+            this.reconnectDelay = 1000;
+            
+            // DOM elements
+            this.elements = {
+                totalPopulation: document.getElementById('total-population'),
+                birthsToday: document.querySelector('#births-today .counter'),
+                deathsToday: document.querySelector('#deaths-today .counter'),
+                liveTime: document.getElementById('live-time'),
+                connectionStatus: document.getElementById('connection-status'),
+                
+                // Emoji indicators
+                birthsIndicator: document.getElementById('births-indicator'),
+                deathsIndicator: document.getElementById('deaths-indicator'),
+                
+                // South Korea elements
+                skPopulation: document.getElementById('sk-population'),
+                skBirths: document.getElementById('sk-births-today'),
+                skDeaths: document.getElementById('sk-deaths-today'),
+                skGrowthRate: document.getElementById('sk-growth-rate'),
+                
+                // North Korea elements
+                nkPopulation: document.getElementById('nk-population'),
+                nkBirths: document.getElementById('nk-births-today'),
+                nkDeaths: document.getElementById('nk-deaths-today'),
+                nkGrowthRate: document.getElementById('nk-growth-rate')
+            };
+            
+            // Static growth rates for display
+            this.skGrowthRate = {{ data.south_korea.population_growth_rate }};
+            this.nkGrowthRate = {{ data.north_korea.population_growth_rate }};
+            
+            // Client-side event simulation
+            this.simulationRates = null;
+            this.lastUpdateTime = Date.now();
+            this.displayPopulation = {
+                total: 0,
+                sk: 0,
+                nk: 0
+            };
+            this.authoritativePopulation = {
+                total: 0,
+                sk: 0,
+                nk: 0
+            };
+            // Track daily events for visual counters
+            this.dailyCounters = {
+                skBirths: 0,
+                skDeaths: 0,
+                nkBirths: 0,
+                nkDeaths: 0
+            };
+            this.eventTimers = [];
+            
+            this.connect();
+            this.startTimeUpdates();
+        }
+        
+        connect() {
+            try {
+                const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+                const wsUrl = `${protocol}//${window.location.host}/ws/population`;
+                this.websocket = new WebSocket(wsUrl);
+                
+                this.updateConnectionStatus('connecting');
+                
+                this.websocket.onopen = () => {
+                    console.log('WebSocket connected to population feed');
+                    this.reconnectAttempts = 0;
+                    this.updateConnectionStatus('connected');
+                };
+                
+                this.websocket.onmessage = (event) => {
+                    const data = JSON.parse(event.data);
+                    this.handleMessage(data);
+                };
+                
+                this.websocket.onclose = () => {
+                    console.log('WebSocket disconnected');
+                    this.updateConnectionStatus('disconnected');
+                    this.attemptReconnect();
+                };
+                
+                this.websocket.onerror = (error) => {
+                    console.error('WebSocket error:', error);
+                    this.updateConnectionStatus('disconnected');
+                };
+                
+            } catch (error) {
+                console.error('WebSocket connection failed:', error);
+                this.updateConnectionStatus('disconnected');
+                this.attemptReconnect();
+            }
+        }
+        
+        updateConnectionStatus(status) {
+            if (!this.elements.connectionStatus) return;
+            
+            this.elements.connectionStatus.className = `connection-status ${status}`;
+            
+            switch(status) {
+                case 'connected':
+                    this.elements.connectionStatus.textContent = 'Live';
+                    break;
+                case 'connecting':
+                    this.elements.connectionStatus.textContent = 'Connecting...';
+                    break;
+                case 'disconnected':
+                    this.elements.connectionStatus.textContent = 'Offline';
+                    break;
+            }
+        }
+        
+        attemptReconnect() {
+            if (this.reconnectAttempts < this.maxReconnectAttempts) {
+                this.reconnectAttempts++;
+                console.log(`Attempting to reconnect... (${this.reconnectAttempts}/${this.maxReconnectAttempts})`);
+                
+                setTimeout(() => {
+                    this.connect();
+                }, this.reconnectDelay * this.reconnectAttempts);
+            } else {
+                console.error('Max reconnection attempts reached. Please refresh the page.');
+                this.updateConnectionStatus('disconnected');
+            }
+        }
+        
+        handleMessage(data) {
+            // Handle WebSocket message with population data
+            this.updateDisplay(data);
+        }
+        
+        startEventSimulation(rates) {
+            console.log('=== START EVENT SIMULATION CALLED ===');
+            console.log('Rates received:', rates);
+            
+            // Clear existing timers
+            this.eventTimers.forEach(timer => clearTimeout(timer));
+            this.eventTimers = [];
+            
+            if (!rates) {
+                console.log('No simulation rates provided');
+                return;
+            }
+            
+            this.simulationRates = rates;
+            console.log('Starting event simulation with rates:', rates);
+            
+            // Schedule random events based on rates
+            this.scheduleRandomEvent('sk', 'birth', rates.sk_births_per_sec);
+            this.scheduleRandomEvent('sk', 'death', rates.sk_deaths_per_sec);
+            this.scheduleRandomEvent('nk', 'birth', rates.nk_births_per_sec);
+            this.scheduleRandomEvent('nk', 'death', rates.nk_deaths_per_sec);
+        }
+        
+        scheduleRandomEvent(country, eventType, ratePerSecond) {
+            // Calculate next event time using exponential distribution with faster events for demo
+            const averageInterval = (1000 / ratePerSecond) * 0.1; // 10x faster for demo visibility
+            const nextEventTime = -Math.log(Math.random()) * averageInterval;
+            
+            console.log('Scheduling', eventType, 'for', country, 'in', Math.round(nextEventTime), 'ms');
+            
+            const timer = setTimeout(() => {
+                this.simulateEvent(country, eventType);
+                // Schedule next event
+                this.scheduleRandomEvent(country, eventType, ratePerSecond);
+            }, nextEventTime);
+            
+            this.eventTimers.push(timer);
+        }
+        
+        simulateEvent(country, eventType) {
+            // Only visual effect - don't modify authoritative population
+            const change = eventType === 'birth' ? 1 : -1;
+            
+            console.log('SIMULATING', eventType.toUpperCase(), 'in', country === 'sk' ? 'South Korea' : 'North Korea');
+            
+            // Update population counters
+            if (country === 'sk') {
+                this.displayPopulation.sk += change;
+                // Update daily counters
+                if (eventType === 'birth') {
+                    this.dailyCounters.skBirths++;
+                } else {
+                    this.dailyCounters.skDeaths++;
+                }
+            } else {
+                this.displayPopulation.nk += change;
+                // Update daily counters
+                if (eventType === 'birth') {
+                    this.dailyCounters.nkBirths++;
+                } else {
+                    this.dailyCounters.nkDeaths++;
+                }
+            }
+            this.displayPopulation.total = this.displayPopulation.sk + this.displayPopulation.nk;
+            
+            // Update displays
+            this.updatePopulationDisplay();
+            this.updateDailyCounters();
+            
+            // Flash emoji indicators
+            if (eventType === 'birth') {
+                console.log('Flashing birth indicator');
+                this.flashIndicator(this.elements.birthsIndicator);
+            } else {
+                console.log('Flashing death indicator');
+                this.flashIndicator(this.elements.deathsIndicator);
+            }
+            
+            console.log('Event simulated in ' + (country === 'sk' ? 'South Korea' : 'North Korea') + '! Display: ' + this.displayPopulation.total.toLocaleString());
+            console.log('Daily counters - SK Births:', this.dailyCounters.skBirths, 'SK Deaths:', this.dailyCounters.skDeaths, 'NK Births:', this.dailyCounters.nkBirths, 'NK Deaths:', this.dailyCounters.nkDeaths);
+        }
+        
+        updatePopulationDisplay() {
+            // Update display with simulated values
+            console.log('Updating population display - SK:', this.displayPopulation.sk.toLocaleString(), 'NK:', this.displayPopulation.nk.toLocaleString(), 'Total:', this.displayPopulation.total.toLocaleString());
+            
+            if (this.elements.totalPopulation) {
+                this.elements.totalPopulation.textContent = this.displayPopulation.total.toLocaleString();
+            }
+            if (this.elements.skPopulation) {
+                this.elements.skPopulation.textContent = this.displayPopulation.sk.toLocaleString();
+                console.log('Updated SK population display to:', this.displayPopulation.sk.toLocaleString());
+            }
+            if (this.elements.nkPopulation) {
+                this.elements.nkPopulation.textContent = this.displayPopulation.nk.toLocaleString();
+                console.log('Updated NK population display to:', this.displayPopulation.nk.toLocaleString());
+            }
+        }
+        
+        updateDailyCounters() {
+            // Update daily birth/death counters with simulated values
+            console.log('Updating daily counters - SK Births:', this.dailyCounters.skBirths, 'SK Deaths:', this.dailyCounters.skDeaths, 'NK Births:', this.dailyCounters.nkBirths, 'NK Deaths:', this.dailyCounters.nkDeaths);
+            
+            if (this.elements.skBirths) {
+                this.elements.skBirths.textContent = this.dailyCounters.skBirths.toLocaleString();
+            }
+            if (this.elements.skDeaths) {
+                this.elements.skDeaths.textContent = this.dailyCounters.skDeaths.toLocaleString();
+            }
+            if (this.elements.nkBirths) {
+                this.elements.nkBirths.textContent = this.dailyCounters.nkBirths.toLocaleString();
+                console.log('Updated NK births display to:', this.dailyCounters.nkBirths.toLocaleString());
+            }
+            if (this.elements.nkDeaths) {
+                this.elements.nkDeaths.textContent = this.dailyCounters.nkDeaths.toLocaleString();
+                console.log('Updated NK deaths display to:', this.dailyCounters.nkDeaths.toLocaleString());
+            }
+            
+            // Update total daily counters
+            const totalBirths = this.dailyCounters.skBirths + this.dailyCounters.nkBirths;
+            const totalDeaths = this.dailyCounters.skDeaths + this.dailyCounters.nkDeaths;
+            
+            if (this.elements.birthsToday) {
+                this.elements.birthsToday.textContent = totalBirths.toLocaleString();
+                console.log('Updated total births to:', totalBirths.toLocaleString());
+            }
+            if (this.elements.deathsToday) {
+                this.elements.deathsToday.textContent = totalDeaths.toLocaleString();
+                console.log('Updated total deaths to:', totalDeaths.toLocaleString());
+            }
+        }
+        
+        resyncToAuthoritative() {
+            // Smoothly sync display to authoritative values
+            this.displayPopulation.total = this.authoritativePopulation.total;
+            this.displayPopulation.sk = this.authoritativePopulation.sk;
+            this.displayPopulation.nk = this.authoritativePopulation.nk;
+            
+            this.updatePopulationDisplay();
+            console.log('Resynced to authoritative population: ' + this.displayPopulation.total.toLocaleString());
+        }
+        
+        updateDisplay(data) {
+            console.log('Received data:', data.is_resync ? 'RESYNC' : 'UPDATE', 'Total:', data.total_population);
+            
+            // Store authoritative populations from server
+            this.authoritativePopulation.total = data.total_population;
+            this.authoritativePopulation.sk = data.south_korea_population;
+            this.authoritativePopulation.nk = data.north_korea_population;
+            
+            // Handle resync - only sync population, don't restart simulation unless rates changed
+            if (data.is_resync) {
+                console.log('Performing resync to authoritative values');
+                this.resyncToAuthoritative();
+            } else if (!this.displayPopulation.total) {
+                // First time - initialize display population
+                console.log('First time initialization');
+                this.displayPopulation.total = data.total_population;
+                this.displayPopulation.sk = data.south_korea_population;
+                this.displayPopulation.nk = data.north_korea_population;
+                this.updatePopulationDisplay();
+            }
+
+            // Start/update event simulation with new rates
+            if (data.simulation_rates) {
+                // Only restart simulation if rates changed or it's the first time
+                const ratesChanged = !this.simulationRates || 
+                    this.simulationRates.sk_births_per_sec !== data.simulation_rates.sk_births_per_sec ||
+                    this.simulationRates.sk_deaths_per_sec !== data.simulation_rates.sk_deaths_per_sec ||
+                    this.simulationRates.nk_births_per_sec !== data.simulation_rates.nk_births_per_sec ||
+                    this.simulationRates.nk_deaths_per_sec !== data.simulation_rates.nk_deaths_per_sec;
+                
+                if (ratesChanged || !this.simulationRates) {
+                    console.log('Starting event simulation with rates:', data.simulation_rates);
+                    this.startEventSimulation(data.simulation_rates);
+                } else {
+                    console.log('Simulation rates unchanged, keeping current simulation running');
+                }
+            } else {
+                console.log('No simulation rates in data:', Object.keys(data));
+            }            // Update births and deaths counters (authoritative)
+            // Sync local counters with server data during resync
+            if (data.is_resync || !this.dailyCounters.skBirths) {
+                this.dailyCounters.skBirths = data.sk_births_today || 0;
+                this.dailyCounters.skDeaths = data.sk_deaths_today || 0;
+                this.dailyCounters.nkBirths = data.nk_births_today || 0;
+                this.dailyCounters.nkDeaths = data.nk_deaths_today || 0;
+                console.log('Synced daily counters from server:', this.dailyCounters);
+                
+                // Update displays with synced values
+                this.updateDailyCounters();
+            } else {
+                // Not a resync - keep local simulated counters, just update display
+                if (this.elements.birthsToday) {
+                    this.elements.birthsToday.textContent = (this.dailyCounters.skBirths + this.dailyCounters.nkBirths).toLocaleString();
+                }
+                
+                if (this.elements.deathsToday) {
+                    this.elements.deathsToday.textContent = (this.dailyCounters.skDeaths + this.dailyCounters.nkDeaths).toLocaleString();
+                }
+                
+                // Individual country birth/death counters with local simulated values
+                if (this.elements.skBirths) {
+                    this.elements.skBirths.textContent = this.dailyCounters.skBirths.toLocaleString();
+                }
+                
+                if (this.elements.skDeaths) {
+                    this.elements.skDeaths.textContent = this.dailyCounters.skDeaths.toLocaleString();
+                }
+                
+                if (this.elements.nkBirths) {
+                    this.elements.nkBirths.textContent = this.dailyCounters.nkBirths.toLocaleString();
+                }
+                
+                if (this.elements.nkDeaths) {
+                    this.elements.nkDeaths.textContent = this.dailyCounters.nkDeaths.toLocaleString();
+                }
+            }
+            
+            // Update growth rates with proper colors
+            this.updateGrowthRate(this.elements.skGrowthRate, this.skGrowthRate);
+            this.updateGrowthRate(this.elements.nkGrowthRate, this.nkGrowthRate);
+            
+            // Update Korea time from server
+            if (data.korea_time && this.elements.liveTime) {
+                this.elements.liveTime.textContent = 'Korea Time: ' + data.korea_time;
+            }
+        }
+        
+        flashIndicator(element) {
+            if (!element) {
+                console.log('Flash indicator called but element not found');
+                return;
+            }
+            
+            console.log('Flashing indicator:', element.id);
+            
+            // Make emoji very visible with strong animation
+            element.style.opacity = '1';
+            element.style.transform = 'scale(1.5)';
+            element.style.transition = 'all 0.2s ease-in-out';
+            element.classList.add('animate-pulse');
+            
+            // Keep visible for 2 seconds for better visibility
+            setTimeout(() => {
+                element.style.opacity = '0';
+                element.style.transform = 'scale(1)';
+                element.classList.remove('animate-pulse');
+            }, 2000);
+        }
+        
+        updateGrowthRate(element, rate) {
+            if (!element) return;
+            element.className = 'text-sm font-medium ' + (rate < 0 ? 'text-red-400' : 'text-green-400');
+            element.textContent = (rate > 0 ? '+' : '') + rate.toFixed(2) + '%';
+        }
+        
+        startTimeUpdates() {
+            // Fallback local time updates (server time preferred via WebSocket)
+            setInterval(() => {
+                if (!this.websocket || this.websocket.readyState !== WebSocket.OPEN) {
+                    const now = new Date();
+                    const timeString = now.toLocaleString('en-US', {
+                        timeZone: 'Asia/Seoul',
+                        hour12: false,
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        second: '2-digit'
+                    });
+                    if (this.elements.liveTime) {
+                        this.elements.liveTime.textContent = 'Korea Time: ' + timeString;
+                    }
+                }
+            }, 1000);
+        }
+    }
+    
+    VANTA.NET({
+      el: "#vanta-bg",
+      mouseControls: true,
+      touchControls: true,
+      minHeight: 200.00,
+      minWidth: 200.00,
+      scale: 1.00,
+      scaleMobile: 1.00,
+      color: 0x1e293b,
+      backgroundColor: 0x111827,
+      points: 12.0,
+      maxDistance: 22.0,
+      spacing: 18.0
+    });
+    
+    // Initialize the population tracker when the page loads
+    document.addEventListener('DOMContentLoaded', () => {
+        window.populationTracker = new PopulationTracker();
+    });
+    </script>
+</body>
+</html>
