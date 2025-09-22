@@ -31,7 +31,7 @@ load_dotenv()
 ENVIRONMENT = os.getenv("ENVIRONMENT", "development")
 DEBUG = ENVIRONMENT == "development"
 SECRET_KEY = os.getenv("SECRET_KEY", "your-secret-key-change-in-production")
-ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", "localhost,127.0.0.1").split(",")
+ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", "localhost,127.0.0.1,pulseofkorea.org,pulseofkorea.com").split(",")
 
 # Email configuration
 SMTP_SERVER = os.getenv("SMTP_HOST", "smtp.gmail.com")
@@ -88,7 +88,9 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
 if not DEBUG:
     app.add_middleware(HTTPSRedirectMiddleware)
 
-app.add_middleware(TrustedHostMiddleware, allowed_hosts=ALLOWED_HOSTS)
+# Clean up allowed hosts (remove empty strings)
+clean_allowed_hosts = [host.strip() for host in ALLOWED_HOSTS if host.strip()]
+app.add_middleware(TrustedHostMiddleware, allowed_hosts=clean_allowed_hosts)
 app.add_middleware(SecurityHeadersMiddleware)
 app.add_middleware(SlowAPIMiddleware)
 app.state.limiter = limiter

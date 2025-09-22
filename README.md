@@ -99,7 +99,7 @@ Create `.env` file based on `.env.example`:
 ```bash
 ENVIRONMENT=production
 SECRET_KEY=your-secret-key-here
-ALLOWED_HOSTS=your-domain.com,localhost
+ALLOWED_HOSTS=pulseofkorea.org,pulseofkorea.com,your-app.onrender.com,localhost
 
 # Email Configuration (for contact form)
 SMTP_HOST=smtp.gmail.com
