@@ -3,7 +3,73 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pulse of Korea</title>
+    <title>Population of the Korean Peninsula – Real-Time Data | Pulse of Korea</title>
+    <meta name="description" content="Real-time population of the Korean Peninsula, including South Korea and North Korea. Live demographic data updated continuously from KOSIS and CIA World Factbook.">
+    <link rel="canonical" href="https://pulseofkorea.org/korean-peninsula-population">
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Dataset",
+      "name": "Korean Peninsula Population Data",
+      "description": "Real-time population statistics for South Korea and North Korea, including birth rates, death rates, and population growth data.",
+      "url": "https://pulseofkorea.org/korean-peninsula-population",
+      "keywords": ["Korea", "population", "demographics", "South Korea", "North Korea", "real-time", "statistics"],
+      "creator": {
+        "@type": "Organization",
+        "name": "Pulse of Korea"
+      },
+      "distribution": [
+        {
+          "@type": "DataDownload",
+          "encodingFormat": "application/json",
+          "contentUrl": "https://pulseofkorea.org/api/population"
+        }
+      ],
+      "spatialCoverage": {
+        "@type": "Place",
+        "name": "Korean Peninsula",
+        "geo": {
+          "@type": "GeoShape",
+          "box": "33.0 124.0 43.0 132.0"
+        }
+      },
+      "temporalCoverage": "2024/..",
+      "variableMeasured": [
+        {
+          "@type": "PropertyValue",
+          "name": "population",
+          "description": "Total population count"
+        },
+        {
+          "@type": "PropertyValue",
+          "name": "birthRate",
+          "description": "Annual birth rate per 1000 people"
+        },
+        {
+          "@type": "PropertyValue",
+          "name": "deathRate",
+          "description": "Annual death rate per 1000 people"
+        },
+        {
+          "@type": "PropertyValue",
+          "name": "populationGrowthRate",
+          "description": "Annual population growth rate percentage"
+        }
+      ],
+      "isBasedOn": [
+        {
+          "@type": "Dataset",
+          "name": "KOSIS (Korean Statistical Information Service)",
+          "description": "Official South Korean demographic statistics"
+        },
+        {
+          "@type": "Dataset",
+          "name": "CIA World Factbook 2024",
+          "description": "North Korean demographic estimates"
+        }
+      ]
+    }
+    </script>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <style>
         body { background: transparent; }
@@ -64,7 +130,7 @@
     
     <div id="main-content" class="flex flex-col items-center justify-center min-h-screen px-4">
         <div class="text-center mb-6 sm:mb-8 relative z-10">
-            <h1 class="text-3xl sm:text-4xl md:text-5xl font-bold mb-4 tracking-tight text-white drop-shadow-lg">Pulse of Korea</h1>
+            <h1 class="text-3xl sm:text-4xl md:text-5xl font-bold mb-4 tracking-tight text-white drop-shadow-lg">Population of the Korean Peninsula (Real-Time)</h1>
             <p class="mb-4 sm:mb-6 text-lg sm:text-xl text-gray-200 drop-shadow-md">Real-time demographic data for the Korean Peninsula</p>
         </div>
 
@@ -130,13 +196,13 @@
 
         <!-- Individual Country Displays -->
         <div class="mt-12 sm:mt-16 w-full max-w-6xl mx-auto px-4 relative z-10">
-            <h2 class="text-2xl sm:text-3xl font-bold text-center mb-6 sm:mb-8 text-white">Individual Country Data</h2>
+            <h2 class="text-2xl sm:text-3xl font-bold text-center mb-6 sm:mb-8 text-white">Combined Demographics</h2>
             
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8">
                 <!-- South Korea Only -->
                 <div class="bg-gray-800 bg-opacity-80 backdrop-blur-sm rounded-xl p-4 sm:p-6 border border-gray-700">
                     <div class="text-center mb-4 sm:mb-6">
-                        <h3 class="text-xl sm:text-2xl font-bold text-blue-400 mb-2">🇰🇷 South Korea</h3>
+                        <h2 class="text-xl sm:text-2xl font-bold text-blue-400 mb-2">🇰🇷 South Korea Population</h2>
                         <div class="text-2xl sm:text-3xl font-bold text-white" id="sk-population">{{ data.south_korea.population | comma }}</div>
                         <div class="text-sm text-gray-400 flex items-center justify-center gap-2">
                             <span>Population</span>
@@ -168,7 +234,7 @@
                 <!-- North Korea Only -->
                 <div class="bg-gray-800 bg-opacity-80 backdrop-blur-sm rounded-xl p-4 sm:p-6 border border-gray-700">
                     <div class="text-center mb-4 sm:mb-6">
-                        <h3 class="text-xl sm:text-2xl font-bold text-blue-600 mb-2">🇰🇵 North Korea</h3>
+                        <h2 class="text-xl sm:text-2xl font-bold text-blue-600 mb-2">🇰🇵 North Korea Population</h2>
                         <div class="text-2xl sm:text-3xl font-bold text-white" id="nk-population">{{ data.north_korea.population | comma }}</div>
                         <div class="text-sm text-gray-400 flex items-center justify-center gap-2">
                             <span>Population</span>
