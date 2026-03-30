@@ -274,8 +274,9 @@ async def home(request: Request):
     }
     
     return templates.TemplateResponse(
-        "index.html",
-        {
+        request=request,
+        name="index.html",
+        context={
             "request": request,
             "title": "Pulse of Korea",
             "data": template_data,
@@ -414,8 +415,9 @@ async def update_base_data(request: Request, country: str, population: int, year
 async def about(request: Request):
     """About page explaining the project"""
     return templates.TemplateResponse(
-        "about.html",
-        {
+        request=request,
+        name="about.html",
+        context={
             "request": request,
             "title": "About - Pulse of Korea"
         }
@@ -425,8 +427,9 @@ async def about(request: Request):
 async def privacy(request: Request):
     """Privacy policy page"""
     return templates.TemplateResponse(
-        "privacy.html",
-        {
+        request=request,
+        name="privacy.html",
+        context={
             "request": request,
             "title": "Privacy Policy - Pulse of Korea"
         }
@@ -478,8 +481,9 @@ This message was sent from the Pulse of Korea contact form.
 async def contact_get(request: Request):
     """Contact form page"""
     return templates.TemplateResponse(
-        "contact.html",
-        {
+        request=request,
+        name="contact.html",
+        context={
             "request": request,
             "title": "Contact - Pulse of Korea"
         }
