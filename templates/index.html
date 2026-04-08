@@ -383,7 +383,10 @@
         }
 
         handleMessage(data) {
-            // Handle WebSocket message with population data
+            // Unwrap initial_state envelope so updateDisplay gets flat fields
+            if (data.type === "initial_state" && data.data) {
+                data = data.data;
+            }
             this.updateDisplay(data);
         }
 
