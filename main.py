@@ -1,4 +1,22 @@
-import os
+"""
+Pulse of Korea — main FastAPI application.
+
+Serves a real-time demographic dashboard for the Korean Peninsula.
+Population counters for South Korea (sourced from KOSIS) and North Korea
+(sourced from the CIA World Factbook) are continuously updated via WebSockets
+so that every connected client stays in sync.
+
+Key routes
+----------
+GET  /           Real-time population dashboard (HTML)
+GET  /api/data   Current demographic snapshot (JSON)
+WS   /ws/population  Live population broadcast stream
+GET  /contact    Contact form (HTML)
+POST /contact    Contact form submission
+GET  /about      About page
+GET  /privacy    Privacy policy
+GET  /admin/contacts  Admin contact-message dashboard
+"""
 import asyncio
 import json
 import logging

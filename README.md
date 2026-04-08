@@ -1,6 +1,8 @@
 # Pulse of Korea
 
-A FastAPI web application displaying real-time demographic data for the Korean Peninsula with interactive visualizations and WebSocket-powered live updates.
+**Pulse of Korea** is a real-time demographic dashboard for the Korean Peninsula. It displays live, continuously-updated population counters for both South Korea and North Korea, anchored to official statistics from [KOSIS](https://kosis.kr) and the [CIA World Factbook](https://www.cia.gov/the-world-factbook/). Population figures are broadcast to all connected browsers simultaneously via WebSockets, so every visitor sees the same numbers at the same moment.
+
+The dashboard features an interactive SVG map of the peninsula, animated birth and death rate counters, and a contact form with rate-limiting and SMTP email delivery. The application is built with FastAPI and is production-hardened with HTTPS enforcement, CSP/HSTS security headers, and trusted-host validation.
 
 ## Features
 
