@@ -6,7 +6,6 @@ Maintains authoritative population data anchored to official statistics
 import asyncio
 import json
 import time
-import random
 from datetime import datetime, timezone, timedelta
 from typing import Dict, List, Optional
 from dataclasses import dataclass, asdict
@@ -15,13 +14,6 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-@dataclass
-class PopulationEvent:
-    """Represents a single birth or death event"""
-    country: str  # 'south_korea' or 'north_korea'
-    event_type: str  # 'birth' or 'death'
-    timestamp: float
-    
 @dataclass
 class CountryData:
     """Official demographic data for a country"""
@@ -74,7 +66,6 @@ class PopulationState:
     nk_births_today: int
     nk_deaths_today: int
     seconds_since_midnight_kst: int
-    recent_events: List[PopulationEvent]  # Track recent birth/death events
 
 class PopulationManager:
     """Hybrid population manager - deterministic server truth with client-side visual events"""
@@ -89,10 +80,6 @@ class PopulationManager:
         # Deterministic populations - calculated from base data
         self.sk_population = 0  # Will be calculated deterministically
         self.nk_population = 0  # Will be calculated deterministically
-        
-        # No server-side event tracking - events are client-side only
-        self.recent_events: List[PopulationEvent] = []  # Keep for compatibility
-        self.max_recent_events = 0  # Not used in hybrid mode
         
         # Daily counters (calculated deterministically)
         self.sk_births_today = 0
@@ -259,7 +246,6 @@ class PopulationManager:
             nk_births_today=self.nk_births_today,
             nk_deaths_today=self.nk_deaths_today,
             seconds_since_midnight_kst=seconds_today,
-            recent_events=self.recent_events.copy()
         )
     
     def add_client(self, websocket):

@@ -1,12 +1,12 @@
 import os
 import asyncio
 import json
-import smtplib
-import ssl
+import logging
+from datetime import datetime
 from contextlib import asynccontextmanager
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
-from fastapi import FastAPI, Request, HTTPException, Depends, WebSocket, WebSocketDisconnect, Form
+from fastapi import FastAPI, Header, Request, HTTPException, WebSocket, WebSocketDisconnect, Form
 from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
@@ -18,11 +18,13 @@ from slowapi.errors import RateLimitExceeded
 from slowapi.middleware import SlowAPIMiddleware
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.responses import Response
-from typing import Optional, Dict, Any
+from typing import Optional
 from dotenv import load_dotenv
 from population_manager import population_manager
 import aiosmtplib
 from email_validator import validate_email, EmailNotValidError
+
+logger = logging.getLogger(__name__)
 
 # Load environment variables
 load_dotenv()
@@ -31,6 +33,8 @@ load_dotenv()
 ENVIRONMENT = os.getenv("ENVIRONMENT", "development")
 DEBUG = ENVIRONMENT == "development"
 SECRET_KEY = os.getenv("SECRET_KEY", "your-secret-key-change-in-production")
+if not DEBUG and SECRET_KEY == "your-secret-key-change-in-production":
+    logger.warning("SECRET_KEY is using the default value in a non-development environment. Set SECRET_KEY in your environment.")
 ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", "localhost,127.0.0.1,pulseofkorea.org,pulseofkorea.com").split(",")
 
 # Email configuration
@@ -110,6 +114,26 @@ def comma_filter(value):
     except (ValueError, TypeError):
         return value
 templates.env.filters["comma"] = comma_filter
+templates.env.globals['current_year'] = datetime.now().year
+
+# Custom error handlers
+@app.exception_handler(404)
+async def not_found_handler(request: Request, exc: HTTPException):
+    return templates.TemplateResponse(
+        request=request,
+        name="404.html",
+        context={"request": request, "title": "Page Not Found - Pulse of Korea"},
+        status_code=404,
+    )
+
+@app.exception_handler(500)
+async def server_error_handler(request: Request, exc: Exception):
+    return templates.TemplateResponse(
+        request=request,
+        name="500.html",
+        context={"request": request, "title": "Server Error - Pulse of Korea"},
+        status_code=500,
+    )
 
 # WebSocket endpoint for real-time population updates
 @app.websocket("/ws/population")
@@ -179,38 +203,6 @@ async def get_realtime_current():
                 "deaths": current_state.nk_deaths_today
             }
         },
-        "korea_time": population_manager.get_korea_timezone_now().isoformat()
-    }
-
-# Get precise real-time population data with decimal precision
-@app.get("/api/realtime/precise")
-async def get_realtime_precise():
-    """Get event-based real-time population state with recent events"""
-    current_state = population_manager.calculate_current_population()
-    return {
-        "timestamp": current_state.timestamp,
-        "south_korea_population": current_state.south_korea_population,
-        "north_korea_population": current_state.north_korea_population,
-        "total_population": current_state.total_population,
-        "births_deaths_today": {
-            "south_korea": {
-                "births": current_state.sk_births_today,
-                "deaths": current_state.sk_deaths_today
-            },
-            "north_korea": {
-                "births": current_state.nk_births_today,
-                "deaths": current_state.nk_deaths_today
-            }
-        },
-        "recent_events": [
-            {
-                "country": event.country,
-                "type": event.event_type,
-                "timestamp": event.timestamp,
-                "time_ago_seconds": current_state.timestamp - event.timestamp
-            }
-            for event in current_state.recent_events[-20:]  # Last 20 events
-        ],
         "realtime_rates_per_second": {
             "south_korea": {
                 "births_per_sec": round(population_manager.sk_births_per_sec, 8),
@@ -221,21 +213,6 @@ async def get_realtime_precise():
                 "births_per_sec": round(population_manager.nk_births_per_sec, 8),
                 "deaths_per_sec": round(population_manager.nk_deaths_per_sec, 8),
                 "net_change_per_sec": round(population_manager.nk_births_per_sec - population_manager.nk_deaths_per_sec, 8)
-            },
-            "combined": {
-                "total_births_per_sec": round(population_manager.sk_births_per_sec + population_manager.nk_births_per_sec, 8),
-                "total_deaths_per_sec": round(population_manager.sk_deaths_per_sec + population_manager.nk_deaths_per_sec, 8),
-                "total_net_change_per_sec": round((population_manager.sk_births_per_sec + population_manager.nk_births_per_sec) - (population_manager.sk_deaths_per_sec + population_manager.nk_deaths_per_sec), 8)
-            }
-        },
-        "expected_integer_changes": {
-            "births_every_n_seconds": {
-                "south_korea": round(1.0 / population_manager.sk_births_per_sec, 1),
-                "north_korea": round(1.0 / population_manager.nk_births_per_sec, 1)
-            },
-            "deaths_every_n_seconds": {
-                "south_korea": round(1.0 / population_manager.sk_deaths_per_sec, 1),
-                "north_korea": round(1.0 / population_manager.nk_deaths_per_sec, 1)
             }
         },
         "korea_time": population_manager.get_korea_timezone_now().isoformat()
@@ -376,13 +353,14 @@ async def validate_demographic_data():
 @limiter.limit("10/hour")
 async def update_base_data(request: Request, country: str, population: int, year: int, 
                           births: Optional[int] = None, deaths: Optional[int] = None, 
-                          growth_rate: Optional[float] = None, admin_key: Optional[str] = None):
-    """Admin endpoint to update base population data when new official statistics are released"""
+                          growth_rate: Optional[float] = None,
+                          x_admin_key: Optional[str] = Header(None)):
+    """Admin endpoint to update base population data when new official statistics are released.
+    Requires X-Admin-Key header for authentication."""
     
-    # Simple admin authentication (in production, use proper authentication)
     expected_admin_key = os.getenv("ADMIN_UPDATE_KEY", "admin-secret-key")
-    if admin_key != expected_admin_key:
-        raise HTTPException(status_code=401, detail="Invalid admin key")
+    if not x_admin_key or x_admin_key != expected_admin_key:
+        raise HTTPException(status_code=401, detail="Invalid or missing X-Admin-Key header")
     
     if country.lower() not in ["south_korea", "north_korea"]:
         raise HTTPException(status_code=400, detail="Country must be 'south_korea' or 'north_korea'")

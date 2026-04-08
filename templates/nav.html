@@ -1,0 +1,33 @@
+<nav class="fixed top-0 left-0 right-0 z-20 bg-gray-900/80 backdrop-blur-sm border-b border-gray-800">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between items-center h-14">
+            <a href="/" class="text-lg font-bold text-white hover:text-blue-400 transition-colors" aria-label="Pulse of Korea home">
+                Pulse of Korea
+            </a>
+            <div class="hidden sm:flex space-x-4">
+                <a href="/" class="text-gray-300 hover:text-blue-400 transition-colors text-sm px-3 py-1 rounded" aria-label="Dashboard">Dashboard</a>
+                <a href="/about" class="text-gray-300 hover:text-blue-400 transition-colors text-sm px-3 py-1 rounded" aria-label="About">About</a>
+                <a href="/contact" class="text-gray-300 hover:text-blue-400 transition-colors text-sm px-3 py-1 rounded" aria-label="Contact">Contact</a>
+                <a href="/privacy" class="text-gray-300 hover:text-blue-400 transition-colors text-sm px-3 py-1 rounded" aria-label="Privacy">Privacy</a>
+            </div>
+            <button id="mobile-menu-btn" class="sm:hidden text-gray-300 hover:text-white" aria-label="Toggle navigation menu">
+                <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+                </svg>
+            </button>
+        </div>
+    </div>
+    <div id="mobile-menu" class="hidden sm:hidden bg-gray-900/95 border-t border-gray-800">
+        <div class="px-4 py-2 space-y-1">
+            <a href="/" class="block px-3 py-2 text-gray-300 hover:text-blue-400 transition-colors">Dashboard</a>
+            <a href="/about" class="block px-3 py-2 text-gray-300 hover:text-blue-400 transition-colors">About</a>
+            <a href="/contact" class="block px-3 py-2 text-gray-300 hover:text-blue-400 transition-colors">Contact</a>
+            <a href="/privacy" class="block px-3 py-2 text-gray-300 hover:text-blue-400 transition-colors">Privacy</a>
+        </div>
+    </div>
+</nav>
+<script>
+    document.getElementById('mobile-menu-btn')?.addEventListener('click', function() {
+        document.getElementById('mobile-menu').classList.toggle('hidden');
+    });
+</script>

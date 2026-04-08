@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+
+{% block title %}Server Error - Pulse of Korea{% endblock %}
+
+{% block content %}
+    <div class="min-h-screen flex items-center justify-center px-4">
+        <div class="text-center">
+            <h1 class="text-6xl font-bold text-gray-500 mb-4">500</h1>
+            <p class="text-xl text-gray-300 mb-8">Something went wrong on our end. Please try again later.</p>
+            <a href="/" class="bg-blue-600 hover:bg-blue-500 text-white font-semibold py-3 px-6 rounded-lg transition-colors">
+                Back to Dashboard
+            </a>
+        </div>
+    </div>
+{% endblock %}
