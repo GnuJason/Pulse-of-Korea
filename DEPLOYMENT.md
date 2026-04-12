@@ -3,21 +3,27 @@
 ## Files Included in Deployment-Ready Project
 
 ```
-pulse-of-korea/
+Pulse-of-Korea/
 ├── .env.example              # Environment variables template
 ├── .gitignore               # Git exclusions (comprehensive)
 ├── main.py                  # FastAPI application entry point
 ├── population_manager.py    # Population calculation logic
-├── Procfile                 # Render deployment configuration
+├── Procfile                 # Render/Heroku start command
 ├── README.md                # Project documentation
-├── requirements.txt         # Python dependencies (minimal)
+├── requirements.txt         # Python dependencies
+├── runtime.txt              # Python version pin (for Render and similar platforms)
 ├── static/                  # (empty - reserved for future assets)
 └── templates/               # HTML templates
-    ├── about.html           # About page
-    ├── contact.html         # Contact form (email-based)
+    ├── base.html            # Shared base layout
+    ├── nav.html             # Navigation partial
+    ├── footer.html          # Footer partial
     ├── index.html           # Main dashboard
+    ├── contact.html         # Contact form (email-based)
+    ├── about.html           # About page
+    ├── privacy.html         # Privacy policy
     ├── korea.svg            # Korean Peninsula map
-    └── privacy.html         # Privacy policy
+    ├── 404.html             # Not-found error page
+    └── 500.html             # Server error page
 ```
 
 ## Render Deployment Instructions
@@ -120,8 +126,11 @@ git push -u origin main
 ```bash
 # Local development
 python -m venv venv
-source venv/bin/activate  # or `venv\Scripts\activate` on Windows
+source venv/bin/activate          # Linux/macOS
+# venv\Scripts\activate.bat       # Windows (Command Prompt)
+# venv\Scripts\Activate.ps1       # Windows (PowerShell)
 pip install -r requirements.txt
+cp .env.example .env              # then edit .env with your values
 uvicorn main:app --reload
 ```
 
