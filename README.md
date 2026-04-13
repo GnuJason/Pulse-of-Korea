@@ -2,6 +2,11 @@
 
 A FastAPI web application displaying real-time demographic data for the Korean Peninsula with interactive visualizations and WebSocket-powered live updates.
 
+## Prerequisites
+
+- **Python 3.11 or 3.12** (other versions may work but are not tested)
+- `pip` package manager (included with Python)
+
 ## Features
 
 - **Real-time Population Tracking**: Live population counters with WebSocket synchronization
@@ -14,20 +19,44 @@ A FastAPI web application displaying real-time demographic data for the Korean P
 
 ## Installation
 
-1. Create a virtual environment:
+1. Clone the repository (or download and extract the ZIP):
+   ```bash
+   git clone https://github.com/GnuJason/Pulse-of-Korea.git
+   cd Pulse-of-Korea
+   ```
+
+2. Create a virtual environment:
    ```bash
    python3 -m venv venv
    ```
 
-2. Activate the virtual environment:
+3. Activate the virtual environment:
+
+   **Linux / macOS:**
    ```bash
    source venv/bin/activate
    ```
 
-3. Install dependencies:
+   **Windows (Command Prompt):**
+   ```bat
+   venv\Scripts\activate.bat
+   ```
+
+   **Windows (PowerShell):**
+   ```powershell
+   venv\Scripts\Activate.ps1
+   ```
+
+4. Install dependencies:
    ```bash
    pip install -r requirements.txt
    ```
+
+5. Set up your environment variables:
+   ```bash
+   cp .env.example .env
+   ```
+   Open `.env` and fill in at minimum a `SECRET_KEY`. Email settings are optional — the contact form will return an error if SMTP is not configured, but all other features work without it.
 
 ## Running the Application
 
@@ -46,10 +75,9 @@ The application will be available at `http://localhost:8000`
 - **Synchronized Updates**: Birth/death rate calculations broadcast to all connected clients
 
 ### Contact System
-- **Contact Form**: `/contact` with validation and rate limiting (5 submissions per hour)
-- **Database Storage**: SQLite backend for message persistence
-- **Admin Interface**: `/admin/contacts` for message management
-- **Rate Limiting**: IP and email-based submission limits
+- **Contact Form**: `/contact` with validation and rate limiting (5 submissions per minute)
+- **Email Delivery**: SMTP-based delivery to the configured admin address
+- **Rate Limiting**: IP-based submission limits via SlowAPI
 
 ### Security Features
 - **HTTPS Redirect**: Production HTTPS enforcement
@@ -60,20 +88,24 @@ The application will be available at `http://localhost:8000`
 ## Project Structure
 
 ```
-pulse-of-korea/
+Pulse-of-Korea/
 ├── main.py                    # FastAPI application with security middleware
 ├── population_manager.py      # Real-time population state management
-├── contact_db.py             # Contact form database operations
-├── requirements.txt          # Python dependencies
-├── contacts.db              # SQLite database for contact messages
-├── .env.example             # Environment variables template
-├── templates/               # Jinja2 templates
-│   ├── index.html          # Main real-time dashboard
-│   ├── contact.html        # Contact form page
-│   ├── admin_contacts.html # Admin dashboard
-│   ├── about.html          # About page
-│   └── privacy.html        # Privacy policy
-└── static/                 # Static assets
+├── requirements.txt           # Python dependencies
+├── Procfile                   # Render/Heroku deployment start command
+├── .env.example               # Environment variables template
+├── templates/                 # Jinja2 HTML templates
+│   ├── base.html              # Shared base layout
+│   ├── nav.html               # Navigation partial
+│   ├── footer.html            # Footer partial
+│   ├── index.html             # Main real-time dashboard
+│   ├── contact.html           # Contact form page
+│   ├── about.html             # About page
+│   ├── privacy.html           # Privacy policy
+│   ├── korea.svg              # Korean Peninsula SVG map
+│   ├── 404.html               # Not-found error page
+│   └── 500.html               # Server error page
+└── static/                    # Static assets (reserved for future use)
 ```
 
 ## API Endpoints
@@ -81,32 +113,45 @@ pulse-of-korea/
 ### Public Endpoints
 - `GET /` - Main dashboard with real-time population data
 - `GET /contact` - Contact form page
-- `POST /contact` - Submit contact form (rate limited)
+- `POST /contact` - Submit contact form (rate limited: 5 requests/minute per IP)
 - `GET /about` - About page
 - `GET /privacy` - Privacy policy
 - `GET /api/data` - Current demographic data (JSON)
+- `GET /api/data/south-korea-only` - South Korea data only (JSON)
+- `GET /api/data/north-korea-only` - North Korea data only (JSON)
+- `GET /api/realtime/current` - Real-time population snapshot (JSON)
+- `GET /api/validation` - Validate demographic data calculations (JSON)
 - `WebSocket /ws/population` - Real-time population updates
 
-### Admin Endpoints  
-- `GET /admin/contacts` - Contact message dashboard
-- `GET /api/admin/contacts` - Contact data API (rate limited)
-- `POST /api/admin/update-base-data` - Update population base data (admin only)
+### Admin Endpoints
+- `POST /api/admin/update-base-data` - Update population base data (requires `X-Admin-Key` header)
 
 ## Environment Configuration
 
-Create `.env` file based on `.env.example`:
+Copy `.env.example` to `.env` and adjust the values:
 
 ```bash
-ENVIRONMENT=production
-SECRET_KEY=your-secret-key-here
-ALLOWED_HOSTS=pulseofkorea.org,pulseofkorea.com,your-app.onrender.com,localhost
+cp .env.example .env
+```
 
-# Email Configuration (for contact form)
+```env
+ENVIRONMENT=development
+SECRET_KEY=your-secret-key-here
+
+# Comma-separated list of trusted hostnames
+ALLOWED_HOSTS=localhost,127.0.0.1
+
+# Admin key for the /api/admin/update-base-data endpoint
+ADMIN_UPDATE_KEY=admin-secret-key-change-in-production
+
+# Email Configuration (optional — required only for the contact form to send emails)
 SMTP_HOST=smtp.gmail.com
 SMTP_PORT=587
 SMTP_USER=your-email@gmail.com
 SMTP_PASSWORD=your-app-password
 ```
+
+> **Note:** The application starts and runs without any email configuration. If SMTP is not configured, submitting the contact form will return a 500 error, but all other pages and features work normally.
 
 ### Email Setup
 
