@@ -1,3 +1,6 @@
+<p align="center">
+  <img src="public/branding/pulseofkorea_gif.jpg" style="max-width: 100%; height: auto;" />
+</p>
 # Pulse of Korea
 
 A FastAPI web application displaying real-time demographic data for the Korean Peninsula with interactive visualizations and WebSocket-powered live updates.
